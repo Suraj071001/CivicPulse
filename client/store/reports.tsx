@@ -1,121 +1,65 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-
-export type ReportStatus = "submitted" | "acknowledged" | "in_progress" | "resolved";
-
-export interface ReportLocation {
-  lat: number;
-  lng: number;
-  accuracy?: number | null;
-  address?: string | null;
-}
-
-export interface Report {
-  id: string;
-  description: string;
-  urgency: "low" | "medium" | "high";
-  photoUrl?: string | null;
-  audioUrl?: string | null;
-  location?: ReportLocation | null;
-  createdAt: number;
-  status: ReportStatus;
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createReport, listReports, updateReport } from "@/lib/api";
+import type { ReportDTO, ReportStatus, ReportUrgency, ReportLocation, ReportCategory } from "@shared/api";
 
 interface ReportsContextValue {
-  reports: Report[];
-  addReport: (r: Omit<Report, "id" | "createdAt" | "status">) => string;
-  updateStatus: (id: string, status: ReportStatus) => void;
-  clearAll: () => void;
+  reports: ReportDTO[];
+  addReport: (r: { description: string; category: ReportCategory; urgency: ReportUrgency; photoFile?: File | null; audioFile?: File | null; location?: ReportLocation | null }) => Promise<string>;
+  updateStatus: (id: string, status: ReportStatus) => Promise<void>;
 }
 
 const ReportsContext = createContext<ReportsContextValue | undefined>(undefined);
 
-const LS_KEY = "city-reports-v1";
-
-function loadFromLS(): Report[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Report[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveToLS(reports: Report[]) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(reports));
-  } catch {}
-}
-
 export function ReportsProvider({ children }: { children: React.ReactNode }) {
-  const [reports, setReports] = useState<Report[]>(() => loadFromLS());
   const { toast } = useToast();
-  const timers = useRef<Record<string, number[]>>({});
+  const qc = useQueryClient();
+  const prevStatuses = useRef<Record<string, ReportStatus>>({});
 
-  useEffect(() => {
-    saveToLS(reports);
-  }, [reports]);
+  const reportsQuery = useQuery({
+    queryKey: ["reports"],
+    queryFn: () => listReports(),
+    refetchInterval: 5000,
+    select: (data) => data.sort((a, b) => b.createdAt - a.createdAt),
+  });
 
-  useEffect(() => () => {
-    // cleanup timers on unmount
-    Object.values(timers.current).forEach((ids) => ids.forEach((t) => clearTimeout(t)));
-  }, []);
+  // Notify on status changes
+  const current = reportsQuery.data ?? [];
+  for (const r of current) {
+    const prev = prevStatuses.current[r.id];
+    if (prev && prev !== r.status) {
+      if (r.status === "acknowledged") toast({ title: "Report acknowledged", description: "City staff has reviewed your report." });
+      if (r.status === "in_progress") toast({ title: "Work in progress", description: "A crew has been assigned to your issue." });
+      if (r.status === "resolved") toast({ title: "Issue resolved", description: "Thanks for helping improve the city!" });
+    }
+    prevStatuses.current[r.id] = r.status;
+  }
 
-  const updateStatus = useCallback((id: string, status: ReportStatus) => {
-    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
-  }, []);
-
-  const scheduleProgress = useCallback(
-    (id: string) => {
-      // Clear existing
-      timers.current[id]?.forEach((t) => clearTimeout(t));
-      timers.current[id] = [];
-
-      const pushTimer = (ms: number, fn: () => void) => {
-        const t = window.setTimeout(fn, ms);
-        timers.current[id].push(t);
-      };
-
-      pushTimer(1200, () => {
-        updateStatus(id, "acknowledged");
-        toast({ title: "Report acknowledged", description: "City staff has reviewed your report." });
-      });
-      pushTimer(4200, () => {
-        updateStatus(id, "in_progress");
-        toast({ title: "Work in progress", description: "A crew has been assigned to your issue." });
-      });
-      pushTimer(12000, () => {
-        updateStatus(id, "resolved");
-        toast({ title: "Issue resolved", description: "Thanks for helping improve the city!" });
-      });
-    },
-    [toast, updateStatus],
-  );
-
-  const addReport = useCallback(
-    (r: Omit<Report, "id" | "createdAt" | "status">) => {
-      const id = crypto.randomUUID();
-      const newReport: Report = {
-        id,
-        createdAt: Date.now(),
-        status: "submitted",
-        ...r,
-      };
-      setReports((prev) => [newReport, ...prev]);
+  const addMutation = useMutation({
+    mutationFn: createReport,
+    onSuccess: (r) => {
       toast({ title: "Report submitted", description: "We'll notify you as it progresses." });
-      scheduleProgress(id);
-      return id;
+      prevStatuses.current[r.id] = r.status;
+      qc.invalidateQueries({ queryKey: ["reports"] });
     },
-    [scheduleProgress, toast],
-  );
+  });
 
-  const clearAll = useCallback(() => {
-    setReports([]);
-  }, []);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ReportStatus }) => updateReport(id, { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["reports"] }),
+  });
 
-  const value = useMemo<ReportsContextValue>(() => ({ reports, addReport, updateStatus, clearAll }), [reports, addReport, updateStatus, clearAll]);
+  const addReport = useCallback<ReportsContextValue["addReport"]>(async (r) => {
+    const created = await addMutation.mutateAsync(r as any);
+    return created.id;
+  }, [addMutation]);
+
+  const updateStatus = useCallback<ReportsContextValue["updateStatus"]>(async (id, status) => {
+    await updateMutation.mutateAsync({ id, status });
+  }, [updateMutation]);
+
+  const value = useMemo<ReportsContextValue>(() => ({ reports: current, addReport, updateStatus }), [current, addReport, updateStatus]);
 
   return <ReportsContext.Provider value={value}>{children}</ReportsContext.Provider>;
 }
