@@ -96,6 +96,12 @@ reportsRouter.post("/", (async (req, res) => {
     };
 
     await store.put(report);
+
+    // Auto-progress statuses (non-persistent timers)
+    setTimeout(() => { store.update(id, { status: "acknowledged" } as Partial<ReportDTO>).catch(() => {}); }, 1500);
+    setTimeout(() => { store.update(id, { status: "in_progress" } as Partial<ReportDTO>).catch(() => {}); }, 5000);
+    setTimeout(() => { store.update(id, { status: "resolved" } as Partial<ReportDTO>).catch(() => {}); }, 15000);
+
     res.status(201).json(report);
   } catch (e) {
     res.status(400).json({ error: "Invalid payload" });
