@@ -1,15 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useReports } from "@/store/reports";
 import { Camera, Mic, MapPin, StopCircle, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { ReportCategory } from "@shared/api";
 
 export const ReportForm: React.FC = () => {
   const { addReport } = useReports();
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<ReportCategory>("pothole");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [urgency, setUrgency] = useState<"low" | "medium" | "high">("medium");
   const [loc, setLoc] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
@@ -30,6 +35,7 @@ export const ReportForm: React.FC = () => {
       if (prev) URL.revokeObjectURL(prev);
       return url;
     });
+    setPhotoFile(f);
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -50,6 +56,7 @@ export const ReportForm: React.FC = () => {
           if (prev) URL.revokeObjectURL(prev);
           return url;
         });
+        setAudioFile(new File([blob], `voice-${Date.now()}.webm`));
         chunksRef.current = [];
         stream.getTracks().forEach((t) => t.stop());
       };
@@ -79,15 +86,17 @@ export const ReportForm: React.FC = () => {
   }, []);
 
   const onSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       if (!canSubmit) return;
-      addReport({ description, urgency, photoUrl, audioUrl, location: loc ? { lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy ?? null, address: null } : null });
+      await addReport({ description, category, urgency, photoFile, audioFile, location: loc ? { lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy ?? null, address: null } : null });
       setDescription("");
       setAudioUrl(null);
+      setAudioFile(null);
       setPhotoUrl(null);
+      setPhotoFile(null);
     },
-    [addReport, audioUrl, canSubmit, description, loc, photoUrl, urgency],
+    [addReport, audioFile, canSubmit, category, description, loc, photoFile, urgency],
   );
 
   return (
@@ -99,6 +108,25 @@ export const ReportForm: React.FC = () => {
             <div className="text-xs text-muted-foreground">Capture photo, add notes or voice</div>
           </div>
           <span className={cn("text-xs px-2 py-1 rounded-full capitalize", urgency === "high" && "bg-red-100 text-red-700", urgency === "medium" && "bg-amber-100 text-amber-700", urgency === "low" && "bg-emerald-100 text-emerald-700")}>{urgency}</span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">Category</div>
+            <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pothole">Pothole</SelectItem>
+                <SelectItem value="streetlight">Streetlight</SelectItem>
+                <SelectItem value="trash">Trash</SelectItem>
+                <SelectItem value="graffiti">Graffiti</SelectItem>
+                <SelectItem value="water">Water</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
