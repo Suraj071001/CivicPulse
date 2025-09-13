@@ -37,6 +37,20 @@ export default function Admin() {
           <div className="text-base font-semibold">Admin Portal</div>
           <div className="text-xs text-muted-foreground">Manage and route reports</div>
         </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-lg border p-3 bg-background">
+            <div className="text-xs text-muted-foreground">Total</div>
+            <div className="text-lg font-semibold">{analytics.data?.totals.total ?? 0}</div>
+          </div>
+          <div className="rounded-lg border p-3 bg-background">
+            <div className="text-xs text-muted-foreground">Active</div>
+            <div className="text-lg font-semibold">{analytics.data?.totals.active ?? 0}</div>
+          </div>
+          <div className="rounded-lg border p-3 bg-background">
+            <div className="text-xs text-muted-foreground">Resolved</div>
+            <div className="text-lg font-semibold">{analytics.data?.totals.resolved ?? 0}</div>
+          </div>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input placeholder="Search text..." value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={status} onValueChange={(v) => setStatus(v as any)}>
