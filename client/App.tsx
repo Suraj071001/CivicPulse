@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import Admin from "./pages/Admin";
 import AppLayout from "@/components/layout/AppLayout";
 import { ReportsProvider } from "@/store/reports";
 
