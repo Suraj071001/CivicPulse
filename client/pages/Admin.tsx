@@ -21,6 +21,8 @@ export default function Admin() {
     select: (d) => d.sort((a, b) => b.createdAt - a.createdAt),
   });
 
+  const analytics = useQuery({ queryKey: ["analytics"], queryFn: () => import("@/lib/api").then(m => m.getAnalytics()) });
+
   const updateMut = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<ReportDTO> }) => updateReport(id, patch as any),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-reports"] }),
