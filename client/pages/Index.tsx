@@ -1,62 +1,49 @@
-import { DemoResponse } from "@shared/api";
-import { useEffect, useState } from "react";
+import React, { useMemo } from "react";
+import { ReportForm } from "@/components/report/ReportForm";
+import { useReports } from "@/store/reports";
+import { CityMap } from "@/components/map/CityMap";
 
 export default function Index() {
-  const [exampleFromServer, setExampleFromServer] = useState("");
-  // Fetch users on component mount
-  useEffect(() => {
-    fetchDemo();
-  }, []);
-
-  // Example of how to fetch data from the server (if needed)
-  const fetchDemo = async () => {
-    try {
-      const response = await fetch("/api/demo");
-      const data = (await response.json()) as DemoResponse;
-      setExampleFromServer(data.message);
-    } catch (error) {
-      console.error("Error fetching hello:", error);
-    }
-  };
+  const { reports } = useReports();
+  const stats = useMemo(() => {
+    const total = reports.length;
+    const resolved = reports.filter((r) => r.status === "resolved").length;
+    const active = total - resolved;
+    return { total, resolved, active };
+  }, [reports]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-      <div className="text-center">
-        {/* TODO: FUSION_GENERATION_APP_PLACEHOLDER replace everything here with the actual app! */}
-        <h1 className="text-2xl font-semibold text-slate-800 flex items-center justify-center gap-3">
-          <svg
-            className="animate-spin h-8 w-8 text-slate-400"
-            viewBox="0 0 50 50"
-          >
-            <circle
-              className="opacity-30"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-            />
-            <circle
-              className="text-slate-600"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-              strokeDasharray="100"
-              strokeDashoffset="75"
-            />
-          </svg>
-          Generating your app...
-        </h1>
-        <p className="mt-4 text-slate-600 max-w-md">
-          Watch the chat on the left for updates that might need your attention
-          to finish generating
-        </p>
-        <p className="mt-4 hidden max-w-md">{exampleFromServer}</p>
+    <div className="space-y-6">
+      <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-50 to-cyan-50 border">
+        <div className="text-xl font-extrabold tracking-tight">Report city issues in seconds</div>
+        <p className="text-sm text-muted-foreground mt-1">Snap a photo, add a note or voice message, and we\'ll tag your location automatically.</p>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <Stat label="Total" value={stats.total} />
+          <Stat label="Active" value={stats.active} />
+          <Stat label="Resolved" value={stats.resolved} />
+        </div>
       </div>
+
+      <ReportForm />
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm font-semibold">Live city map</div>
+          <a href="/dashboard" className="text-xs text-primary hover:underline">Open full map</a>
+        </div>
+        <div className="h-64 overflow-hidden rounded-xl border">
+          <CityMap reports={reports} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl bg-background border p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold">{value}</div>
     </div>
   );
 }
