@@ -100,7 +100,7 @@ function titleCase(s: string) {
   return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function clusterByCell(reports: Report[]) {
+function clusterByCell(reports: ReportDTO[]) {
   const map = new Map<string, { lat: number; lng: number; count: number }>();
   for (const r of reports) {
     if (!r.location) continue;
