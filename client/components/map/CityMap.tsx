@@ -17,13 +17,13 @@ L.Icon.Default.mergeOptions({
 });
 
 export interface CityMapProps {
-  reports: Report[];
+  reports: ReportDTO[];
   center?: LatLngExpression;
   zoom?: number;
   className?: string;
 }
 
-function urgencyColor(u: Report["urgency"]) {
+function urgencyColor(u: ReportDTO["urgency"]) {
   switch (u) {
     case "high":
       return "#ef4444"; // red-500
