@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L, { LatLngExpression } from "leaflet";
-import { Report } from "@/store/reports";
+import type { ReportDTO } from "@shared/api";
 
 // Fix default marker icons in Vite
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
