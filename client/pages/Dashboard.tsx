@@ -35,8 +35,8 @@ export default function Dashboard() {
   );
 }
 
-import type { Report } from "@/store/reports";
-function clusterByCell(reports: Report[]) {
+import type { ReportDTO } from "@shared/api";
+function clusterByCell(reports: ReportDTO[]) {
   const map = new Map<string, { lat: number; lng: number; count: number }>();
   for (const r of reports) {
     if (!r.location) continue;
