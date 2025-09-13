@@ -1,25 +1,39 @@
 import type { RequestHandler } from "express";
 import express from "express";
-import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { JsonStore } from "../storage/dataStore";
-import type { AnalyticsResponse, CreateReportRequest, ReportDTO, ReportsQuery, UpdateReportRequest } from "@shared/api";
+import type { CreateReportRequest, ReportDTO, ReportsQuery, UpdateReportRequest } from "@shared/api";
 import { determineDepartment } from "../services/routing";
 
 const uploadsDir = path.resolve(process.cwd(), "public/uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || "");
-    const base = path.basename(file.originalname || "upload", ext).replace(/[^a-z0-9_-]/gi, "").slice(0, 32) || "upload";
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${base}${ext}`;
-    cb(null, name);
-  },
-});
-const upload = multer({ storage });
+function saveDataUrl(dataUrl: string, prefix: string): string | null {
+  try {
+    const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
+    if (!match) return null;
+    const mime = match[1];
+    const base64 = match[2];
+    const buf = Buffer.from(base64, "base64");
+    const ext = mimeToExt(mime);
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${prefix}${ext}`;
+    fs.writeFileSync(path.join(uploadsDir, name), buf);
+    return `/uploads/${name}`;
+  } catch {
+    return null;
+  }
+}
+function mimeToExt(mime: string) {
+  if (mime.includes("png")) return ".png";
+  if (mime.includes("jpeg") || mime.includes("jpg")) return ".jpg";
+  if (mime.includes("webp")) return ".webp";
+  if (mime.includes("gif")) return ".gif";
+  if (mime.includes("ogg")) return ".ogg";
+  if (mime.includes("mp4")) return ".mp4";
+  if (mime.includes("webm")) return ".webm";
+  return "";
+}
 
 const store = new JsonStore<ReportDTO>("server/data/reports.json");
 
@@ -52,13 +66,10 @@ reportsRouter.get("/:id", (async (req, res) => {
 }) as RequestHandler);
 
 // Create
-reportsRouter.post("/", upload.fields([
-  { name: "photo", maxCount: 1 },
-  { name: "audio", maxCount: 1 },
-]), (async (req, res) => {
+reportsRouter.post("/", (async (req, res) => {
   try {
     const body = req.body as any;
-    const location = body.location ? JSON.parse(body.location) : null;
+    const location = body.location ?? null;
     const payload: CreateReportRequest = {
       description: String(body.description || ""),
       category: body.category,
@@ -67,9 +78,8 @@ reportsRouter.post("/", upload.fields([
     };
     const id = crypto.randomUUID();
 
-    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
-    const photo = files?.photo?.[0];
-    const audio = files?.audio?.[0];
+    const photoUrl = body.photoDataUrl ? saveDataUrl(body.photoDataUrl, "photo") : null;
+    const audioUrl = body.audioDataUrl ? saveDataUrl(body.audioDataUrl, "audio") : null;
 
     const report: ReportDTO = {
       id,
@@ -81,8 +91,8 @@ reportsRouter.post("/", upload.fields([
       status: "submitted",
       department: determineDepartment(payload.category),
       assignee: null,
-      photoUrl: photo ? `/uploads/${photo.filename}` : null,
-      audioUrl: audio ? `/uploads/${audio.filename}` : null,
+      photoUrl,
+      audioUrl,
     };
 
     await store.put(report);
