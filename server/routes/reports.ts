@@ -39,15 +39,42 @@ const store = new JsonStore<ReportDTO>("server/data/reports.json");
 
 export const reportsRouter = express.Router();
 
+function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // List with filtering
 reportsRouter.get("/", (async (req, res) => {
-  const q = req.query as ReportsQuery;
+  const qraw = req.query as any;
+  const q: ReportsQuery = {
+    status: qraw.status,
+    category: qraw.category,
+    urgency: qraw.urgency,
+    department: qraw.department,
+    q: qraw.q,
+    centerLat: qraw.centerLat !== undefined ? Number(qraw.centerLat) : undefined,
+    centerLng: qraw.centerLng !== undefined ? Number(qraw.centerLng) : undefined,
+    radiusKm: qraw.radiusKm !== undefined ? Number(qraw.radiusKm) : undefined,
+    hasLocation: qraw.hasLocation !== undefined ? String(qraw.hasLocation) === "true" : undefined,
+  };
   const all = await store.list();
   const filtered = all.filter((r) => {
     if (q.status && r.status !== q.status) return false;
     if (q.category && r.category !== q.category) return false;
     if (q.urgency && r.urgency !== q.urgency) return false;
     if (q.department && r.department !== q.department) return false;
+    if (q.hasLocation === true && !r.location) return false;
+    if (q.hasLocation === false && r.location) return false;
+    if (q.centerLat !== undefined && q.centerLng !== undefined && q.radiusKm !== undefined) {
+      if (!r.location) return false;
+      const d = distanceKm(q.centerLat!, q.centerLng!, r.location.lat, r.location.lng);
+      if (d > q.radiusKm!) return false;
+    }
     if (q.q) {
       const s = q.q.toLowerCase();
       const hay = `${r.description} ${r.department} ${r.assignee ?? ""}`.toLowerCase();

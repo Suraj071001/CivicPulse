@@ -56,6 +56,10 @@ export interface ReportsQuery {
   urgency?: ReportUrgency;
   department?: string;
   q?: string;
+  centerLat?: number;
+  centerLng?: number;
+  radiusKm?: number;
+  hasLocation?: boolean;
 }
 
 export interface AnalyticsResponse {
