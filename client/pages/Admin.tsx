@@ -89,10 +89,10 @@ export default function Admin() {
               <SelectItem value="resolved">Resolved</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={category} onValueChange={(v) => setCategory(v as any)}>
+          <Select value={category} onValueChange={(v) => setCategory(v === "__any" ? "" : (v as any))}>
             <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any category</SelectItem>
+              <SelectItem value="__any">Any category</SelectItem>
               <SelectItem value="pothole">Pothole</SelectItem>
               <SelectItem value="streetlight">Streetlight</SelectItem>
               <SelectItem value="trash">Trash</SelectItem>
@@ -101,19 +101,19 @@ export default function Admin() {
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={urgency} onValueChange={(v) => setUrgency(v as any)}>
+          <Select value={urgency} onValueChange={(v) => setUrgency(v === "__any" ? "" : (v as any))}>
             <SelectTrigger><SelectValue placeholder="Urgency" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any urgency</SelectItem>
+              <SelectItem value="__any">Any urgency</SelectItem>
               <SelectItem value="low">Low</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="high">High</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={department} onValueChange={(v) => setDepartment(v)}>
+          <Select value={department} onValueChange={(v) => setDepartment(v === "__any" ? "" : v)}>
             <SelectTrigger><SelectValue placeholder="Department" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any department</SelectItem>
+              <SelectItem value="__any">Any department</SelectItem>
               {depts.map((d) => (
                 <SelectItem key={d} value={d}>{d}</SelectItem>
               ))}
