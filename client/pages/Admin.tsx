@@ -124,10 +124,10 @@ export default function Admin() {
             <Input placeholder="Lng" value={centerLng} onChange={(e) => setCenterLng(e.target.value)} />
             <Input placeholder="Radius km" value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} />
           </div>
-          <Select value={hasLocation} onValueChange={setHasLocation}>
+          <Select value={hasLocation} onValueChange={(v) => setHasLocation(v === "__any" ? "" : v)}>
             <SelectTrigger><SelectValue placeholder="Has location" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="__any">All</SelectItem>
               <SelectItem value="true">With location</SelectItem>
               <SelectItem value="false">Without location</SelectItem>
             </SelectContent>
