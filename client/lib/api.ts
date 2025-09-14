@@ -1,37 +1,30 @@
 import type { AnalyticsResponse, CreateReportRequest, ReportDTO, ReportsQuery, UpdateReportRequest } from "@shared/api";
 
-const FALLBACK_PREFIXES = ["", "./", "/.netlify/functions/api", "//localhost:8888"];
-
 async function tryFetch(input: string, init?: RequestInit) {
-  // try multiple prefixes to handle serverless hosting path differences
-  let lastErr: any = null;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  for (const p of FALLBACK_PREFIXES) {
-    // when using a function prefix, strip the leading /api from input
-    let url: string;
-    if (!p) {
-      url = input;
-    } else if (p.startsWith("/.netlify")) {
-      url = `${p}${input.replace(/^\/api/, "")}`; // /.netlify/functions/api + /reports
-    } else if (p.startsWith("./") || p === "") {
-      url = input;
-    } else if (p.startsWith("//")) {
-      url = `${location.protocol}${p}${input}`;
-    } else {
-      url = `${p}${input}`;
-    }
+  const candidates: string[] = [];
 
-    // also try absolute origin path as fallback
-    const candidates = [url, origin ? `${origin}${input}` : url];
+  // direct relative
+  candidates.push(input);
+  // absolute origin
+  if (origin) candidates.push(`${origin}${input}`);
+  // netlify function variants
+  candidates.push(`/.netlify/functions/api${input}`); // maps to /api/xxx inside serverless wrapper when function mounted at root
+  candidates.push(`/.netlify/functions/api/api${input}`); // when wrapper expects /api/*
+  // local dev common paths
+  candidates.push(`/.netlify/functions${input}`);
+  candidates.push(`/.netlify/functions/api${input.replace(/^\/api/, "")}`);
+  // try with ./ prefix (relative)
+  candidates.push(`.${input}`);
 
-    for (const candidate of candidates) {
-      try {
-        const res = await fetch(candidate, init as any);
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        return res;
-      } catch (e) {
-        lastErr = e;
-      }
+  let lastErr: any = null;
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate, init as any);
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res;
+    } catch (e) {
+      lastErr = e;
     }
   }
   throw lastErr ?? new Error("Failed to fetch");
