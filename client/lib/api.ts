@@ -1,15 +1,32 @@
 import type { AnalyticsResponse, CreateReportRequest, ReportDTO, ReportsQuery, UpdateReportRequest } from "@shared/api";
 
+const FALLBACK_PREFIXES = ["", "/.netlify/functions/api", "/.netlify/functions/api/api"];
+
+async function tryFetch(input: string, init?: RequestInit) {
+  // try multiple prefixes to handle serverless hosting path differences
+  let lastErr: any = null;
+  for (const p of FALLBACK_PREFIXES) {
+    const url = p ? `${p}${input}` : input;
+    try {
+      const res = await fetch(url, init as any);
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res;
+    } catch (e) {
+      lastErr = e;
+      // continue to next
+    }
+  }
+  throw lastErr ?? new Error("Failed to fetch");
+}
+
 export async function listReports(params: ReportsQuery = {}): Promise<ReportDTO[]> {
   const qs = new URLSearchParams(params as any).toString();
-  const res = await fetch(`/api/reports${qs ? `?${qs}` : ""}`);
-  if (!res.ok) throw new Error("Failed to load reports");
+  const res = await tryFetch(`/api/reports${qs ? `?${qs}` : ""}`);
   return res.json();
 }
 
 export async function getReport(id: string): Promise<ReportDTO> {
-  const res = await fetch(`/api/reports/${id}`);
-  if (!res.ok) throw new Error("Not found");
+  const res = await tryFetch(`/api/reports/${id}`);
   return res.json();
 }
 
@@ -22,8 +39,7 @@ export async function createReport(data: Omit<CreateReportRequest, "photoUrl" | 
   };
   if (data.photoFile) payload.photoDataUrl = await fileToDataUrl(data.photoFile);
   if (data.audioFile) payload.audioDataUrl = await fileToDataUrl(data.audioFile);
-  const res = await fetch(`/api/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-  if (!res.ok) throw new Error("Failed to create report");
+  const res = await tryFetch(`/api/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   return res.json();
 }
 
@@ -37,13 +53,11 @@ async function fileToDataUrl(file: File): Promise<string> {
 }
 
 export async function updateReport(id: string, patch: UpdateReportRequest): Promise<ReportDTO> {
-  const res = await fetch(`/api/reports/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
-  if (!res.ok) throw new Error("Failed to update report");
+  const res = await tryFetch(`/api/reports/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
   return res.json();
 }
 
 export async function getAnalytics(): Promise<AnalyticsResponse> {
-  const res = await fetch(`/api/analytics`);
-  if (!res.ok) throw new Error("Failed to load analytics");
+  const res = await tryFetch(`/api/analytics`);
   return res.json();
 }
