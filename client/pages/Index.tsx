@@ -15,8 +15,13 @@ export default function Index() {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-50 to-cyan-50 border">
-        <div className="text-xl font-extrabold tracking-tight">Report city issues in seconds</div>
-        <p className="text-sm text-muted-foreground mt-1">Snap a photo, add a note or voice message, and we\'ll tag your location automatically.</p>
+        <div className="text-xl font-extrabold tracking-tight">
+          Report city issues in seconds
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Snap a photo, add a note or voice message, and we\'ll tag your
+          location automatically.
+        </p>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <Stat label="Total" value={stats.total} />
           <Stat label="Active" value={stats.active} />
@@ -29,7 +34,9 @@ export default function Index() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm font-semibold">Live city map</div>
-          <a href="/dashboard" className="text-xs text-primary hover:underline">Open full map</a>
+          <a href="/dashboard" className="text-xs text-primary hover:underline">
+            Open full map
+          </a>
         </div>
         <div className="h-64 overflow-hidden rounded-xl border">
           <CityMap reports={reports} />

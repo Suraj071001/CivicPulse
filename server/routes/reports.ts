@@ -3,7 +3,12 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { JsonStore } from "../storage/dataStore";
-import type { CreateReportRequest, ReportDTO, ReportsQuery, UpdateReportRequest } from "@shared/api";
+import type {
+  CreateReportRequest,
+  ReportDTO,
+  ReportsQuery,
+  UpdateReportRequest,
+} from "@shared/api";
 import { determineDepartment } from "../services/routing";
 
 const uploadsDir = path.resolve(process.cwd(), "public/uploads");
@@ -43,7 +48,11 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -57,10 +66,15 @@ reportsRouter.get("/", (async (req, res) => {
     urgency: qraw.urgency,
     department: qraw.department,
     q: qraw.q,
-    centerLat: qraw.centerLat !== undefined ? Number(qraw.centerLat) : undefined,
-    centerLng: qraw.centerLng !== undefined ? Number(qraw.centerLng) : undefined,
+    centerLat:
+      qraw.centerLat !== undefined ? Number(qraw.centerLat) : undefined,
+    centerLng:
+      qraw.centerLng !== undefined ? Number(qraw.centerLng) : undefined,
     radiusKm: qraw.radiusKm !== undefined ? Number(qraw.radiusKm) : undefined,
-    hasLocation: qraw.hasLocation !== undefined ? String(qraw.hasLocation) === "true" : undefined,
+    hasLocation:
+      qraw.hasLocation !== undefined
+        ? String(qraw.hasLocation) === "true"
+        : undefined,
   };
   const all = await store.list();
   const filtered = all.filter((r) => {
@@ -70,14 +84,24 @@ reportsRouter.get("/", (async (req, res) => {
     if (q.department && r.department !== q.department) return false;
     if (q.hasLocation === true && !r.location) return false;
     if (q.hasLocation === false && r.location) return false;
-    if (q.centerLat !== undefined && q.centerLng !== undefined && q.radiusKm !== undefined) {
+    if (
+      q.centerLat !== undefined &&
+      q.centerLng !== undefined &&
+      q.radiusKm !== undefined
+    ) {
       if (!r.location) return false;
-      const d = distanceKm(q.centerLat!, q.centerLng!, r.location.lat, r.location.lng);
+      const d = distanceKm(
+        q.centerLat!,
+        q.centerLng!,
+        r.location.lat,
+        r.location.lng,
+      );
       if (d > q.radiusKm!) return false;
     }
     if (q.q) {
       const s = q.q.toLowerCase();
-      const hay = `${r.description} ${r.department} ${r.assignee ?? ""}`.toLowerCase();
+      const hay =
+        `${r.description} ${r.department} ${r.assignee ?? ""}`.toLowerCase();
       if (!hay.includes(s)) return false;
     }
     return true;
@@ -105,8 +129,12 @@ reportsRouter.post("/", (async (req, res) => {
     };
     const id = crypto.randomUUID();
 
-    const photoUrl = body.photoDataUrl ? saveDataUrl(body.photoDataUrl, "photo") : null;
-    const audioUrl = body.audioDataUrl ? saveDataUrl(body.audioDataUrl, "audio") : null;
+    const photoUrl = body.photoDataUrl
+      ? saveDataUrl(body.photoDataUrl, "photo")
+      : null;
+    const audioUrl = body.audioDataUrl
+      ? saveDataUrl(body.audioDataUrl, "audio")
+      : null;
 
     const report: ReportDTO = {
       id,
@@ -125,9 +153,21 @@ reportsRouter.post("/", (async (req, res) => {
     await store.put(report);
 
     // Auto-progress statuses (non-persistent timers)
-    setTimeout(() => { store.update(id, { status: "acknowledged" } as Partial<ReportDTO>).catch(() => {}); }, 1500);
-    setTimeout(() => { store.update(id, { status: "in_progress" } as Partial<ReportDTO>).catch(() => {}); }, 5000);
-    setTimeout(() => { store.update(id, { status: "resolved" } as Partial<ReportDTO>).catch(() => {}); }, 15000);
+    setTimeout(() => {
+      store
+        .update(id, { status: "acknowledged" } as Partial<ReportDTO>)
+        .catch(() => {});
+    }, 1500);
+    setTimeout(() => {
+      store
+        .update(id, { status: "in_progress" } as Partial<ReportDTO>)
+        .catch(() => {});
+    }, 5000);
+    setTimeout(() => {
+      store
+        .update(id, { status: "resolved" } as Partial<ReportDTO>)
+        .catch(() => {});
+    }, 15000);
 
     res.status(201).json(report);
   } catch (e) {

@@ -34,7 +34,12 @@ function urgencyColor(u: ReportDTO["urgency"]) {
   }
 }
 
-export const CityMap: React.FC<CityMapProps> = ({ reports, center = [37.7749, -122.4194], zoom = 12, className }) => {
+export const CityMap: React.FC<CityMapProps> = ({
+  reports,
+  center = [37.7749, -122.4194],
+  zoom = 12,
+  className,
+}) => {
   const cells = useMemo(() => clusterByCell(reports), [reports]);
 
   // Auto-fit bounds when there are multiple reports
@@ -63,14 +68,25 @@ export const CityMap: React.FC<CityMapProps> = ({ reports, center = [37.7749, -1
 
         {reports.map((r) =>
           r.location ? (
-            <Marker key={r.id} position={[r.location.lat, r.location.lng] as LatLngExpression}>
+            <Marker
+              key={r.id}
+              position={[r.location.lat, r.location.lng] as LatLngExpression}
+            >
               <Popup>
                 <div className="space-y-2">
-                  <div className="text-sm font-semibold">{r.description || "No description"}</div>
-                  <div className="text-xs text-muted-foreground capitalize">Urgency: {r.urgency.replace("_", " ")}</div>
+                  <div className="text-sm font-semibold">
+                    {r.description || "No description"}
+                  </div>
+                  <div className="text-xs text-muted-foreground capitalize">
+                    Urgency: {r.urgency.replace("_", " ")}
+                  </div>
                   <div className="text-xs">Status: {titleCase(r.status)}</div>
                   {r.photoUrl ? (
-                    <img src={r.photoUrl} alt="report" className="mt-2 rounded-md max-h-40 w-auto object-cover" />
+                    <img
+                      src={r.photoUrl}
+                      alt="report"
+                      className="mt-2 rounded-md max-h-40 w-auto object-cover"
+                    />
                   ) : null}
                   {r.audioUrl ? (
                     <audio controls className="w-full mt-2">
@@ -88,7 +104,11 @@ export const CityMap: React.FC<CityMapProps> = ({ reports, center = [37.7749, -1
             key={`${c.lat.toFixed(3)}-${c.lng.toFixed(3)}`}
             center={[c.lat, c.lng] as LatLngExpression}
             radius={Math.min(400 + c.count * 120, 2000)}
-            pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: Math.min(0.25 + c.count * 0.07, 0.55) }}
+            pathOptions={{
+              color: "#22c55e",
+              fillColor: "#22c55e",
+              fillOpacity: Math.min(0.25 + c.count * 0.07, 0.55),
+            }}
           />
         ))}
       </MapContainer>
@@ -110,7 +130,9 @@ function clusterByCell(reports: ReportDTO[]) {
     if (!map.has(key)) map.set(key, { lat, lng, count: 0 });
     map.get(key)!.count += 1;
   }
-  return Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, 30);
+  return Array.from(map.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 30);
 }
 
 function roundTo(n: number, d: number) {

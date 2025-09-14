@@ -11,9 +11,19 @@ export interface DemoResponse {
   message: string;
 }
 
-export type ReportStatus = "submitted" | "acknowledged" | "in_progress" | "resolved";
+export type ReportStatus =
+  | "submitted"
+  | "acknowledged"
+  | "in_progress"
+  | "resolved";
 export type ReportUrgency = "low" | "medium" | "high";
-export type ReportCategory = "pothole" | "streetlight" | "trash" | "graffiti" | "water" | "other";
+export type ReportCategory =
+  | "pothole"
+  | "streetlight"
+  | "trash"
+  | "graffiti"
+  | "water"
+  | "other";
 
 export interface ReportLocation {
   lat: number;

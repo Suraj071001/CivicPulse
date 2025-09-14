@@ -15,14 +15,22 @@ export default function Dashboard() {
           <div className="rounded-xl bg-background/90 backdrop-blur border shadow-sm p-3">
             <div className="text-sm font-semibold mb-2">Priority areas</div>
             {cells.length === 0 ? (
-              <div className="text-xs text-muted-foreground">No reports yet. Submit one to see hotspots.</div>
+              <div className="text-xs text-muted-foreground">
+                No reports yet. Submit one to see hotspots.
+              </div>
             ) : (
               <ul className="space-y-2">
                 {cells.slice(0, 4).map((c, i) => (
-                  <li key={`${c.lat}-${c.lng}`} className="flex items-center justify-between text-xs">
-                    <span className="truncate">Lat {c.lat.toFixed(2)}, Lng {c.lng.toFixed(2)}</span>
+                  <li
+                    key={`${c.lat}-${c.lng}`}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="truncate">
+                      Lat {c.lat.toFixed(2)}, Lng {c.lng.toFixed(2)}
+                    </span>
                     <span className="inline-flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" /> {c.count} reports
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />{" "}
+                      {c.count} reports
                     </span>
                   </li>
                 ))}
