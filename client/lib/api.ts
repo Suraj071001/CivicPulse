@@ -1,19 +1,37 @@
 import type { AnalyticsResponse, CreateReportRequest, ReportDTO, ReportsQuery, UpdateReportRequest } from "@shared/api";
 
-const FALLBACK_PREFIXES = ["", "/.netlify/functions/api", "/.netlify/functions/api/api"];
+const FALLBACK_PREFIXES = ["", "./", "/.netlify/functions/api", "//localhost:8888"];
 
 async function tryFetch(input: string, init?: RequestInit) {
   // try multiple prefixes to handle serverless hosting path differences
   let lastErr: any = null;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   for (const p of FALLBACK_PREFIXES) {
-    const url = p ? `${p}${input}` : input;
-    try {
-      const res = await fetch(url, init as any);
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      return res;
-    } catch (e) {
-      lastErr = e;
-      // continue to next
+    // when using a function prefix, strip the leading /api from input
+    let url: string;
+    if (!p) {
+      url = input;
+    } else if (p.startsWith("/.netlify")) {
+      url = `${p}${input.replace(/^\/api/, "")}`; // /.netlify/functions/api + /reports
+    } else if (p.startsWith("./") || p === "") {
+      url = input;
+    } else if (p.startsWith("//")) {
+      url = `${location.protocol}${p}${input}`;
+    } else {
+      url = `${p}${input}`;
+    }
+
+    // also try absolute origin path as fallback
+    const candidates = [url, origin ? `${origin}${input}` : url];
+
+    for (const candidate of candidates) {
+      try {
+        const res = await fetch(candidate, init as any);
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        return res;
+      } catch (e) {
+        lastErr = e;
+      }
     }
   }
   throw lastErr ?? new Error("Failed to fetch");
