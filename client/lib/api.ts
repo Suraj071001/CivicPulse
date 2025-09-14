@@ -77,6 +77,19 @@ export async function updateReport(id: string, patch: UpdateReportRequest): Prom
 }
 
 export async function getAnalytics(): Promise<AnalyticsResponse> {
-  const res = await tryFetch(`/api/analytics`);
-  return res.json();
+  try {
+    const res = await tryFetch(`/api/analytics`);
+    return res.json();
+  } catch (e) {
+    // return empty analytics to keep UI functional
+    // eslint-disable-next-line no-console
+    console.warn("getAnalytics: backend unavailable, returning empty analytics", e);
+    return {
+      totals: { total: 0, active: 0, resolved: 0 },
+      byStatus: { submitted: 0, acknowledged: 0, in_progress: 0, resolved: 0 },
+      byCategory: { pothole: 0, streetlight: 0, trash: 0, graffiti: 0, water: 0, other: 0 },
+      byUrgency: { low: 0, medium: 0, high: 0 },
+      dailyCounts: [],
+    } as AnalyticsResponse;
+  }
 }
