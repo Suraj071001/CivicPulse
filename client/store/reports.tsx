@@ -28,7 +28,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   // Notify on status changes (run in effect to avoid updating other components during render)
   const current = reportsQuery.data ?? [];
 
-  React.useEffect(() => {
+  useEffect(() => {
     for (const r of current) {
       const prev = prevStatuses.current[r.id];
       if (prev && prev !== r.status) {
