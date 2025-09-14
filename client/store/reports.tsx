@@ -13,7 +13,7 @@ interface ReportsContextValue {
 
 const ReportsContext = createContext<ReportsContextValue | undefined>(undefined);
 
-export function ReportsProvider({ children }: { children: React.ReactNode }) {
+export function ReportsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const prevStatuses = useRef<Record<string, ReportStatus>>({});
