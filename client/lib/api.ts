@@ -32,8 +32,16 @@ async function tryFetch(input: string, init?: RequestInit) {
 
 export async function listReports(params: ReportsQuery = {}): Promise<ReportDTO[]> {
   const qs = new URLSearchParams(params as any).toString();
-  const res = await tryFetch(`/api/reports${qs ? `?${qs}` : ""}`);
-  return res.json();
+  try {
+    const res = await tryFetch(`/api/reports${qs ? `?${qs}` : ""}`);
+    return res.json();
+  } catch (e) {
+    // network/backend unavailable — return empty list so UI remains operational
+    // log for debugging
+    // eslint-disable-next-line no-console
+    console.warn("listReports: backend unavailable, returning empty list", e);
+    return [];
+  }
 }
 
 export async function getReport(id: string): Promise<ReportDTO> {
