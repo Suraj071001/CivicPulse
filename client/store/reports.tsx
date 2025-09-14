@@ -24,17 +24,20 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
     select: (data) => data.sort((a, b) => b.createdAt - a.createdAt),
   });
 
-  // Notify on status changes
+  // Notify on status changes (run in effect to avoid updating other components during render)
   const current = reportsQuery.data ?? [];
-  for (const r of current) {
-    const prev = prevStatuses.current[r.id];
-    if (prev && prev !== r.status) {
-      if (r.status === "acknowledged") toast({ title: "Report acknowledged", description: "City staff has reviewed your report." });
-      if (r.status === "in_progress") toast({ title: "Work in progress", description: "A crew has been assigned to your issue." });
-      if (r.status === "resolved") toast({ title: "Issue resolved", description: "Thanks for helping improve the city!" });
+
+  React.useEffect(() => {
+    for (const r of current) {
+      const prev = prevStatuses.current[r.id];
+      if (prev && prev !== r.status) {
+        if (r.status === "acknowledged") toast({ title: "Report acknowledged", description: "City staff has reviewed your report." });
+        if (r.status === "in_progress") toast({ title: "Work in progress", description: "A crew has been assigned to your issue." });
+        if (r.status === "resolved") toast({ title: "Issue resolved", description: "Thanks for helping improve the city!" });
+      }
+      prevStatuses.current[r.id] = r.status;
     }
-    prevStatuses.current[r.id] = r.status;
-  }
+  }, [current, toast]);
 
   const addMutation = useMutation({
     mutationFn: createReport,
