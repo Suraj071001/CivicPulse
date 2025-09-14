@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listReports, updateReport } from "@/lib/api";
 import type { ReportDTO, ReportStatus, ReportCategory, ReportUrgency } from "@shared/api";
