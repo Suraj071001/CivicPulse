@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useReports } from "@/store/reports";
 import { CityMap } from "@/components/map/CityMap";
 
