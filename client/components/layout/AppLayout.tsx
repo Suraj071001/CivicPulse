@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Map, PlusCircle } from "lucide-react";
+import { Map, PlusCircle, Shield } from "lucide-react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,9 +20,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="container max-w-3xl mx-auto px-4 py-4 flex-1">{children}</main>
 
       <nav className="sticky bottom-0 z-40 border-t bg-background/80 backdrop-blur">
-        <div className="container max-w-3xl mx-auto px-8 py-2 grid grid-cols-2 gap-3">
+        <div className="container max-w-3xl mx-auto px-8 py-2 grid grid-cols-3 gap-3">
           <Tab to="/" icon={<PlusCircle className="h-5 w-5" />} label="Report" end />
           <Tab to="/dashboard" icon={<Map className="h-5 w-5" />} label="Map" />
+          <Tab to="/admin" icon={<Shield className="h-5 w-5" />} label="Admin" />
         </div>
       </nav>
     </div>
