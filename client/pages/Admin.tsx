@@ -6,18 +6,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function Admin() {
+  const exportCsv = (rows: ReportDTO[]) => {
+    const flat = rows.map((r) => ({ id: r.id, createdAt: new Date(r.createdAt).toISOString(), status: r.status, category: r.category, urgency: r.urgency, department: r.department, assignee: r.assignee ?? "", description: r.description.replace(/\n/g, " ") }));
+    const header = Object.keys(flat[0] ?? { id: "id" });
+    const lines = [header.join(","), ...flat.map((row) => header.map((h) => JSON.stringify((row as any)[h] ?? "")).join(","))];
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `reports-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ReportStatus | "">("");
   const [category, setCategory] = useState<ReportCategory | "">("");
   const [urgency, setUrgency] = useState<ReportUrgency | "">("");
   const [department, setDepartment] = useState<string | "">("");
+  const [centerLat, setCenterLat] = useState<string>("");
+  const [centerLng, setCenterLng] = useState<string>("");
+  const [radiusKm, setRadiusKm] = useState<string>("");
+  const [hasLocation, setHasLocation] = useState<string>("");
 
   const qc = useQueryClient();
   const query = useQuery({
-    queryKey: ["admin-reports", { q, status, category, urgency, department }],
-    queryFn: () => listReports({ q: q || undefined, status: (status as any) || undefined, category: (category as any) || undefined, urgency: (urgency as any) || undefined, department: department || undefined }),
+    queryKey: ["admin-reports", { q, status, category, urgency, department, centerLat, centerLng, radiusKm, hasLocation }],
+    queryFn: () => listReports({
+      q: q || undefined,
+      status: (status as any) || undefined,
+      category: (category as any) || undefined,
+      urgency: (urgency as any) || undefined,
+      department: department || undefined,
+      centerLat: centerLat ? Number(centerLat) : undefined,
+      centerLng: centerLng ? Number(centerLng) : undefined,
+      radiusKm: radiusKm ? Number(radiusKm) : undefined,
+      hasLocation: hasLocation ? hasLocation === "true" : undefined,
+    }),
     select: (d) => d.sort((a, b) => b.createdAt - a.createdAt),
   });
 
@@ -93,6 +119,37 @@ export default function Admin() {
               ))}
             </SelectContent>
           </Select>
+          <div className="grid grid-cols-3 gap-2">
+            <Input placeholder="Lat" value={centerLat} onChange={(e) => setCenterLat(e.target.value)} />
+            <Input placeholder="Lng" value={centerLng} onChange={(e) => setCenterLng(e.target.value)} />
+            <Input placeholder="Radius km" value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} />
+          </div>
+          <Select value={hasLocation} onValueChange={setHasLocation}>
+            <SelectTrigger><SelectValue placeholder="Has location" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All</SelectItem>
+              <SelectItem value="true">With location</SelectItem>
+              <SelectItem value="false">Without location</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex justify-end">
+          <Button variant="secondary" onClick={() => exportCsv(query.data ?? [])}>Export CSV</Button>
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4 bg-card border">
+        <div className="text-sm font-semibold mb-2">Trends</div>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={analytics.data?.dailyCounts ?? []}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
