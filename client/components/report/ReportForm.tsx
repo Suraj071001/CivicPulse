@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useReports } from "@/store/reports";
 import { Camera, Mic, MapPin, StopCircle, Loader2 } from "lucide-react";
