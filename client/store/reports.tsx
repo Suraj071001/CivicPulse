@@ -13,7 +13,7 @@ interface ReportsContextValue {
   updateStatus: (id: string, status: ReportStatus) => Promise<void>;
 }
 
-const ReportsContext = createContext<ReportsContextValue | undefined>(undefined);
+const ReportsContext = React.createContext<ReportsContextValue | undefined>(undefined);
 
 export function ReportsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
