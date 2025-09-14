@@ -79,10 +79,10 @@ export default function Admin() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input placeholder="Search text..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+          <Select value={status} onValueChange={(v) => setStatus(v === "__any" ? "" : (v as any))}>
             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any status</SelectItem>
+              <SelectItem value="__any">Any status</SelectItem>
               <SelectItem value="submitted">Submitted</SelectItem>
               <SelectItem value="acknowledged">Acknowledged</SelectItem>
               <SelectItem value="in_progress">In progress</SelectItem>
