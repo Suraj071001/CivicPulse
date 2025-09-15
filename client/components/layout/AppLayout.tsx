@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav className="sticky bottom-0 z-40 border-t bg-background/80 backdrop-blur">
-        <div className="container max-w-3xl mx-auto px-8 py-2 grid grid-cols-3 gap-3">
+        <div className="container max-w-3xl mx-auto px-8 py-2 grid grid-cols-2 gap-3">
           <Tab
             to="/"
             icon={<PlusCircle className="h-5 w-5" />}
@@ -29,11 +29,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             end
           />
           <Tab to="/dashboard" icon={<Map className="h-5 w-5" />} label="Map" />
-          <Tab
+          {/* <Tab
             to="/admin"
             icon={<Shield className="h-5 w-5" />}
             label="Admin"
-          />
+          /> */}
         </div>
       </nav>
     </div>

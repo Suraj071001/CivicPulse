@@ -36,7 +36,7 @@ function urgencyColor(u: ReportDTO["urgency"]) {
 
 export const CityMap: React.FC<CityMapProps> = ({
   reports,
-  center = [37.7749, -122.4194],
+  center = [23.845561, 91.425434],
   zoom = 12,
   className,
 }) => {
